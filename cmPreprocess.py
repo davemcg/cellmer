@@ -13,6 +13,8 @@ parser.add_argument('--num-bases', type=int, default=16, help='The number of bas
 parser.add_argument('--min-read-num', type=int, default=1000, help='The minimum number of reads required to retain a cell (default 1000)')
 parser.add_argument('--chunk-size', type=int, default=200, help='How many reads to store in memory until write to disk. Faster to be the same \
 as min-read-num, but will use more memory (default 200).')
+parser.add_argument('--compress', default = False, action='store_true', help = 'Compress (gzip) the output fasta files in your output directory (default no)')
+parser.add_argument('--no-compress', dest='compress', action='store_false',  help = 'Do not compress (gzip) the output fasta files in your output directory (default)')
 
 # parse the command line arguments
 args = parser.parse_args()
@@ -79,6 +81,16 @@ for seq in set(keeper_bc):
 	f.write(''.join(cell_fq_dict[seq]))
 	f.close()
 
+# optional compress
+if args.compress:
+	import gzip
+	import shutil
+	for seq in set(keeper_bc):
+		with open(args.output + '/' + seq + '.fa', 'rb') as f_in:
+			with gzip.open(args.output + '/' + seq + '.fa.gz', 'wb') as f_out:
+				shutil.copyfileobj(f_in, f_out)
+		os.remove(args.output + '/' + seq + '.fa')
+	
 
 end = time.perf_counter()
 elapsed = end - start
